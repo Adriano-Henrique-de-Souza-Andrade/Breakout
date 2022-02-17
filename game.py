@@ -74,9 +74,30 @@ class create_paddle():
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
 
+score1_value = 0
+score2_value = 0
+font = pygame.font.Font('font.ttf', 40)
+score1_x = 20
+score1_y = 20
+score2_x = 300
+score2_y = 20
+
+
+def show_score_1(x, y):
+    score1 = font.render(""+str(score1_value), True, (255, 255, 255))
+    screen.blit(score1, (x, y))
+
+
+def show_score_2(x, y):
+    score2 = font.render(""+str(score2_value), True, (255, 255, 255))
+    screen.blit(score2, (x, y))
+
+
 wall = wall()
 wall.create_wall()
 paddle = create_paddle()
+show_score_1(score1_x, score1_y)
+show_score_2(score2_x, score2_y)
 
 run = True
 while run:

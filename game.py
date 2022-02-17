@@ -1,4 +1,5 @@
 import pygame
+from pygame.locals import *
 pygame.init()
 
 screen_width = 400
@@ -60,11 +61,27 @@ class wall():
                     block_col = YELLOW
                 pygame.draw.rect(screen, block_col, block[0])
                 pygame.draw.rect(screen, background_color, (block[0]), 1)
+
+class create_paddle():
+
+    def __init__(self):
+        self.height = 10
+        self.width = int(screen_width / cols)
+        self.x = (screen_width // 2) - (self.width // 2)
+        self.y = screen_height - 100
+        self.rect = Rect(self.x, self.y, self.width, self.height)
+
+    def draw(self):
+        pygame.draw.rect(screen, paddle_color, self.rect)
+
 wall = wall()
 wall.create_wall()
+paddle = create_paddle()
+
 run = True
 while run:
     wall.draw_wall()
+    paddle.draw()
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False

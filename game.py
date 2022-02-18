@@ -27,7 +27,6 @@ class create_wall():
         self.height = 10
         self.x = (screen_width // 2) - (self.width // 2)
         self.y = screen_height - 100
-        self.rect = Rect(self.x, self.y, self.width, self.height)
 
     def create_wall(self):
         self.blocks = []
@@ -99,7 +98,7 @@ class create_ball():
         self.x = (screen_width // 2) - (self.width // 2)
         self.y = (screen_width // 2) - (self.width // 2)
         self.rect = Rect(self.x, self.y, self.width, self.height)
-        self.speed = 2
+        self.speed = 3
 
     def move(self):
         self.rect.x += self.speed * self.right
@@ -112,6 +111,43 @@ class create_ball():
             self.down = 1
         elif self.rect.y >= screen_height:
             self.down = -1
+
+        collision_thresh = 5
+
+        wall_destroyed = 1
+        row_count = 0
+        for row in wall.blocks:
+            item_count = 0
+            for item in row:
+                #check collision
+                if self.rect.colliderect(item[0]):
+                    #check if collision was from above
+                    if abs(self.rect.bottom - item[0].top) < collision_thresh and self.down > 0:
+                        self.down *= -1
+                    #check if collision was from below
+                    if abs(self.rect.top - item[0].bottom) < collision_thresh and self.down < 0:
+                        self.down *= -1
+                    #check if collision was from left
+                    if abs(self.rect.right - item[0].left) < collision_thresh and self.right > 0:
+                        self.right *= -1
+                    #check if collision was from right
+                    if abs(self.rect.left - item[0].right) < collision_thresh and self.right < 0:
+                        self.right *= -1
+                    #reduce the block's strength by doing damage to it
+                    if wall.blocks[row_count][item_count][1] > 1:
+                        wall.blocks[row_count][item_count][1] -= 1
+                    else:
+                        wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
+                #check if block still exists, in whcih case the wall is not destroyed
+                if wall.blocks[row_count][item_count][0] != (0, 0, 0, 0):
+                    wall_destroyed = 0
+                #increase item counter
+                item_count += 1
+            #increase row counter
+            row_count += 1
+        #after iterating through all the blocks, check if the wall is destroyed
+        if wall_destroyed == 1:
+            self.game_over = 1
 
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
@@ -152,8 +188,6 @@ while run:
     ball.move()
     paddle.move()
 
-    # bola verifica a colisão com paddle e se for
-    # verdadeira, a boa volta
     if paddle.rect.x - 20 < ball.rect.x < paddle.rect.x + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
         ball.down = -1
 

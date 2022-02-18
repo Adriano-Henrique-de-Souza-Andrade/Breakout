@@ -1,5 +1,6 @@
 import pygame
 from pygame.locals import *
+
 pygame.init()
 
 screen_width = 400
@@ -20,10 +21,13 @@ cols = 14
 rows = 8
 
 
-class wall():
+class create_wall():
     def __init__(self):
         self.width = screen_width / cols
         self.height = 10
+        self.x = (screen_width // 2) - (self.width // 2)
+        self.y = screen_height - 100
+        self.rect = Rect(self.x, self.y, self.width, self.height)
 
     def create_wall(self):
         self.blocks = []
@@ -70,6 +74,44 @@ class create_paddle():
         self.x = (screen_width // 2) - (self.width // 2)
         self.y = screen_height - 100
         self.rect = Rect(self.x, self.y, self.width, self.height)
+        self.speed = 5
+
+    def move(self):
+        self.direction = 0
+        key = pygame.key.get_pressed()
+        if key[pygame.K_LEFT] and self.rect.left > 0:
+            self.rect.x -= self.speed
+            self.direction = -1
+        if key[pygame.K_RIGHT] and self.rect.right < screen_width:
+            self.rect.x += self.speed
+            self.direction = 1
+
+    def draw(self):
+        pygame.draw.rect(screen, paddle_color, self.rect)
+
+class create_ball():
+
+    def __init__(self):
+        self.right = -1
+        self.down = 1
+        self.height = 5
+        self.width = 5
+        self.x = (screen_width // 2) - (self.width // 2)
+        self.y = (screen_width // 2) - (self.width // 2)
+        self.rect = Rect(self.x, self.y, self.width, self.height)
+        self.speed = 2
+
+    def move(self):
+        self.rect.x += self.speed * self.right
+        self.rect.y += self.speed * self.down
+        if self.rect.x >= screen_width:
+            self.right = -1
+        elif self.rect.x <= 0:
+            self.right = 1
+        if self.rect.y <= 0:
+            self.down = 1
+        elif self.rect.y >= screen_height:
+            self.down = -1
 
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
@@ -93,20 +135,31 @@ def show_score_2(x, y):
     screen.blit(score2, (x, y))
 
 
-wall = wall()
+wall = create_wall()
 wall.create_wall()
 paddle = create_paddle()
+ball = create_ball()
 show_score_1(score1_x, score1_y)
 show_score_2(score2_x, score2_y)
 
 run = True
 while run:
+    pygame.time.Clock().tick(60)
+    screen.fill(color="black")
     wall.draw_wall()
     paddle.draw()
+    ball.draw()
+    ball.move()
+    paddle.move()
+
+    # bola verifica a colisão com paddle e se for
+    # verdadeira, a boa volta
+    if paddle.rect.x - 20 < ball.rect.x < paddle.rect.x + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
+        ball.down = -1
+
     for event in pygame.event.get():
         if event.type == pygame.QUIT:
             run = False
-
     pygame.display.update()
 
 pygame.quit()

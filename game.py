@@ -25,6 +25,7 @@ wall_sound = pygame.mixer.Sound('sounds_wall.wav')
 cols = 14
 rows = 8
 score = 0
+chances = 0
 
 
 class Wall:
@@ -200,7 +201,7 @@ while run:
     screen.blit(text, (275, 50))
     text = font.render('1', True, WHITE)
     screen.blit(text, (20, 10))
-    text = font.render('1', True, WHITE)
+    text = font.render(f"{chances}", True, WHITE)
     screen.blit(text, (250, 10))
 
     if mx - 20 < ball.rect.x < mx + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
@@ -221,6 +222,30 @@ while run:
 
     if ball.rect.y < 100:
         paddle.rect.width = int(screen_width / cols) / 2
+
+    if ball.rect.y > 590:
+        chances += 1
+        ball.rect.x = 345
+        ball.rect.y = 240
+        if chances == 3:
+            font = pygame.font.Font('Upheaval.ttf', 50)
+            text = font.render(str("YOU LOSE"), True, RED)
+            screen.blit(text, (87, 320))
+            font = pygame.font.Font('Upheaval.ttf', 20)
+            text = font.render(str(" Wait 5 scs to play again"), True, RED)
+            screen.blit(text, (60, 370))
+            text = font.render(str("Press Esc to exit the game"), True, RED)
+            screen.blit(text, (60, 390))
+            pygame.display.flip()
+
+            pygame.time.wait(5000)
+
+            chances = 0
+
+        for event in pygame.event.get():
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
+                    exit()
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

@@ -6,6 +6,7 @@ pygame.init()
 screen_width = 400
 screen_height = 600
 count_hit_paddle = 0
+
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('BREAKOUT GAME')
 
@@ -17,11 +18,9 @@ YELLOW = (255, 215, 0)
 ORANGE = (238, 118, 0)
 WHITE = (255, 255, 255)
 
-
 brick_sound = pygame.mixer.Sound('sounds_brick.wav')
 paddle_sound = pygame.mixer.Sound('sounds_paddle.wav')
 wall_sound = pygame.mixer.Sound('sounds_wall.wav')
-
 
 cols = 14
 rows = 8
@@ -41,21 +40,17 @@ class Wall:
                 block_x = col * self.width
                 block_y = 100 + row * self.height
                 rect = pygame.Rect(block_x, block_y, self.width, self.height)
-                value = 0
+
                 color = 0
                 if row < 2:
                     color = 4
-                    value = 30
                 elif row < 4:
                     color = 3
-                    value = 9
                 elif row < 6:
                     color = 2
-                    value = 5
                 elif row < 8:
                     color = 1
-                    value = 1
-                block_individual = [rect, color, value]
+                block_individual = [rect, color]
                 block_row.append(block_individual)
             self.blocks.append(block_row)
 
@@ -71,7 +66,6 @@ class Wall:
                     block_col = GREEN
                 elif block[1] == 1:
                     block_col = YELLOW
-
                 pygame.draw.rect(screen, block_col, block[0])
                 pygame.draw.rect(screen, background_color, (block[0]), 1)
 
@@ -88,7 +82,7 @@ class CreatePaddle:
 
     def move(self):
         mx, my = pygame.mouse.get_pos()
-        self.rect.x = mx - int(screen_width / cols)/2
+        self.rect.x = mx
 
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
@@ -96,7 +90,6 @@ class CreatePaddle:
 
 class CreateBall:
     def __init__(self):
-        self.score = 0
         self.right = -1
         self.down = 1
         self.height = 5
@@ -111,6 +104,20 @@ class CreateBall:
 
         self.rect.x += self.speed * self.right
         self.rect.y += self.speed * self.down
+        if self.rect.x >= screen_width:
+            self.right = -1
+            wall_sound.play()
+        elif self.rect.x <= 0:
+            self.right = 1
+            wall_sound.play()
+        if self.rect.y <= 0:
+            self.down = 1
+            wall_sound.play()
+        elif self.rect.y >= screen_height:
+            self.down = -1
+            wall_sound.play()
+
+        # speed set
         if count_hit_paddle < 4:
             self.speed = 2.5
         elif count_hit_paddle < 12:
@@ -138,6 +145,11 @@ class CreateBall:
                     if abs(self.rect.right - item[0].left) < collision_thresh and self.right > 0:
                         self.right *= -1
                     if abs(self.rect.left - item[0].right) < collision_thresh and self.right < 0:
+                        self.right *= 1
+                    # reduce the block's strength by doing damage to it
+                    wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
+                    brick_sound.play()
+
                 if wall.blocks[row_count][item_count][0] != (0, 0, 0, 0):
                     wall_destroyed = 0
 
@@ -150,6 +162,7 @@ class CreateBall:
         # after iterating through all the blocks, check if the wall is destroyed
         if wall_destroyed == 1:
             self.game_over = 1
+
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
 
@@ -168,4 +181,29 @@ while run:
     ball.draw()
     ball.move()
     paddle.move()
-    mx, my = pygame.mouse.get_pos()
+
+    font = pygame.font.Font('font.ttf', 30)
+    text = font.render(str(f"{score:03}"), True, WHITE)
+    screen.blit(text, (40, 50))
+    text = font.render('000', True, WHITE)
+    screen.blit(text, (275, 50))
+    text = font.render('1', True, WHITE)
+    screen.blit(text, (20, 10))
+    text = font.render('1', True, WHITE)
+    screen.blit(text, (250, 10))
+
+    if paddle.rect.x - 20 < ball.rect.x < paddle.rect.x + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
+        if ball.down == 1:
+            count_hit_paddle += 1
+        ball.down = -1
+        paddle_sound.play()
+
+    if ball.rect.y < 100:
+        paddle.rect.width = int(screen_width / cols) / 2
+
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            run = False
+    pygame.display.update()
+
+pygame.quit()

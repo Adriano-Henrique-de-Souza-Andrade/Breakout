@@ -154,7 +154,7 @@ class CreateBall:
                     if abs(self.rect.right - item[0].left) < collision_thresh and self.right > 0:
                         self.right *= -1
                     if abs(self.rect.left - item[0].right) < collision_thresh and self.right < 0:
-                        self.right *= 1
+                        self.right *= -1
                     # reduce the block's strength by doing damage to it
                     wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
                     self.score += wall.blocks[row_count][item_count][2]
@@ -225,8 +225,8 @@ while run:
 
     if ball.rect.y > 590:
         chances += 1
-        ball.rect.x = 345
-        ball.rect.y = 240
+        ball.rect.x = (screen_width // 2)
+        ball.rect.y = (screen_width // 2)
         if chances == 3:
             font = pygame.font.Font('Upheaval.ttf', 50)
             text = font.render(str("YOU LOSE"), True, RED)
@@ -239,7 +239,9 @@ while run:
             pygame.display.flip()
 
             pygame.time.wait(5000)
-
+            ball.score = 0
+            wall.create_wall()
+            paddle.rect.width = int(screen_width / cols)
             chances = 0
 
         for event in pygame.event.get():

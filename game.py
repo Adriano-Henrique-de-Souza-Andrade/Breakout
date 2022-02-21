@@ -5,6 +5,7 @@ pygame.init()
 
 screen_width = 400
 screen_height = 600
+count_hit_paddle = 0
 
 screen = pygame.display.set_mode((screen_width, screen_height))
 pygame.display.set_caption('BREAKOUT GAME')
@@ -25,8 +26,6 @@ class create_wall():
     def __init__(self):
         self.width = screen_width / cols
         self.height = 10
-        self.x = (screen_width // 2) - (self.width // 2)
-        self.y = screen_height - 100
 
     def create_wall(self):
         self.blocks = []
@@ -68,6 +67,7 @@ class create_wall():
 class create_paddle():
 
     def __init__(self):
+        self.short = False
         self.height = 10
         self.width = int(screen_width / cols)
         self.x = (screen_width // 2) - (self.width // 2)
@@ -76,14 +76,8 @@ class create_paddle():
         self.speed = 5
 
     def move(self):
-        self.direction = 0
-        key = pygame.key.get_pressed()
-        if key[pygame.K_LEFT] and self.rect.left > 0:
-            self.rect.x -= self.speed
-            self.direction = -1
-        if key[pygame.K_RIGHT] and self.rect.right < screen_width:
-            self.rect.x += self.speed
-            self.direction = 1
+        mx, my = pygame.mouse.get_pos()
+        self.rect.x = mx
 
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
@@ -98,7 +92,8 @@ class create_ball():
         self.x = (screen_width // 2) - (self.width // 2)
         self.y = (screen_width // 2) - (self.width // 2)
         self.rect = Rect(self.x, self.y, self.width, self.height)
-        self.speed = 3
+        self.speed = 0
+        self.nivel = 0
 
     def move(self):
         self.rect.x += self.speed * self.right
@@ -112,6 +107,20 @@ class create_ball():
         elif self.rect.y >= screen_height:
             self.down = -1
 
+        # Speed set
+
+        if count_hit_paddle < 4:
+            self.speed = 2.5
+        elif count_hit_paddle < 12:
+            self.speed = 3
+        elif self.rect.y <= 141 and self.nivel == 0:
+            self.nivel = 1
+            self.speed = 3.5
+        elif self.rect.y <= 121 and self.nivel == 1:
+            self.speed = 4
+
+        # set to become harder
+
         collision_thresh = 5
 
         wall_destroyed = 1
@@ -119,26 +128,17 @@ class create_ball():
         for row in wall.blocks:
             item_count = 0
             for item in row:
-                #check collision
                 if self.rect.colliderect(item[0]):
-                    #check if collision was from above
                     if abs(self.rect.bottom - item[0].top) < collision_thresh and self.down > 0:
                         self.down *= -1
-                    #check if collision was from below
                     if abs(self.rect.top - item[0].bottom) < collision_thresh and self.down < 0:
                         self.down *= -1
-                    #check if collision was from left
                     if abs(self.rect.right - item[0].left) < collision_thresh and self.right > 0:
                         self.right *= -1
-                    #check if collision was from right
                     if abs(self.rect.left - item[0].right) < collision_thresh and self.right < 0:
                         self.right *= -1
                     #reduce the block's strength by doing damage to it
-                    if wall.blocks[row_count][item_count][1] > 1:
-                        wall.blocks[row_count][item_count][1] -= 1
-                    else:
-                        wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
-                #check if block still exists, in whcih case the wall is not destroyed
+                    wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
                 if wall.blocks[row_count][item_count][0] != (0, 0, 0, 0):
                     wall_destroyed = 0
                 #increase item counter
@@ -189,7 +189,12 @@ while run:
     paddle.move()
 
     if paddle.rect.x - 20 < ball.rect.x < paddle.rect.x + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
+        if ball.down == 1:
+            count_hit_paddle += 1
         ball.down = -1
+
+    if ball.rect.y < 100:
+        paddle.rect.width = int(screen_width / cols)/2
 
     for event in pygame.event.get():
         if event.type == pygame.QUIT:

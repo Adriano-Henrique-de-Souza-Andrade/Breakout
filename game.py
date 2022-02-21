@@ -31,6 +31,7 @@ class Wall:
     def __init__(self):
         self.width = screen_width / cols
         self.height = 10
+        self.blocks = []
 
     def create_wall(self):
         self.blocks = []
@@ -41,16 +42,21 @@ class Wall:
                 block_y = 100 + row * self.height
                 rect = pygame.Rect(block_x, block_y, self.width, self.height)
 
+                value = 0
                 color = 0
                 if row < 2:
                     color = 4
+                    value = 7
                 elif row < 4:
                     color = 3
+                    value = 5
                 elif row < 6:
                     color = 2
+                    value = 3
                 elif row < 8:
                     color = 1
-                block_individual = [rect, color]
+                    value = 1
+                block_individual = [rect, color, value]
                 block_row.append(block_individual)
             self.blocks.append(block_row)
 
@@ -81,8 +87,8 @@ class CreatePaddle:
         self.speed = 5
 
     def move(self):
-        mx, my = pygame.mouse.get_pos()
-        self.rect.x = mx
+        mouse_x, mouse_y = pygame.mouse.get_pos()
+        self.rect.x = mouse_x - int(screen_width / cols)/2
 
     def draw(self):
         pygame.draw.rect(screen, paddle_color, self.rect)
@@ -90,6 +96,8 @@ class CreatePaddle:
 
 class CreateBall:
     def __init__(self):
+        self.game_over = 1
+        self.score = 0
         self.right = -1
         self.down = 1
         self.height = 5
@@ -104,17 +112,17 @@ class CreateBall:
 
         self.rect.x += self.speed * self.right
         self.rect.y += self.speed * self.down
-        if self.rect.x >= screen_width:
-            self.right = -1
+        if self.rect.x >= screen_width and self.right > 0:
+            self.right *= -1
             wall_sound.play()
-        elif self.rect.x <= 0:
-            self.right = 1
+        elif self.rect.x <= 0 and self.right < 0:
+            self.right *= -1
             wall_sound.play()
-        if self.rect.y <= 0:
-            self.down = 1
+        if self.rect.y <= 0 and self.down < 0:
+            self.down *= -1
             wall_sound.play()
-        elif self.rect.y >= screen_height:
-            self.down = -1
+        elif self.rect.y >= screen_height and self.down > 0:
+            self.down *= -1
             wall_sound.play()
 
         # speed set
@@ -148,6 +156,7 @@ class CreateBall:
                         self.right *= 1
                     # reduce the block's strength by doing damage to it
                     wall.blocks[row_count][item_count][0] = (0, 0, 0, 0)
+                    self.score += wall.blocks[row_count][item_count][2]
                     brick_sound.play()
 
                 if wall.blocks[row_count][item_count][0] != (0, 0, 0, 0):
@@ -182,8 +191,10 @@ while run:
     ball.move()
     paddle.move()
 
+    mx, my = pygame.mouse.get_pos()
+
     font = pygame.font.Font('font.ttf', 30)
-    text = font.render(str(f"{score:03}"), True, WHITE)
+    text = font.render(str(f"{ball.score:03}"), True, WHITE)
     screen.blit(text, (40, 50))
     text = font.render('000', True, WHITE)
     screen.blit(text, (275, 50))
@@ -192,10 +203,20 @@ while run:
     text = font.render('1', True, WHITE)
     screen.blit(text, (250, 10))
 
-    if paddle.rect.x - 20 < ball.rect.x < paddle.rect.x + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
+    if mx - 20 < ball.rect.x < mx + 20 and paddle.rect.y - 8 < ball.rect.y < paddle.rect.y + 8:
         if ball.down == 1:
             count_hit_paddle += 1
         ball.down = -1
+        if mx - 14 < ball.rect.x < mx + 10:
+            if ball.rect.x > mx and ball.right < 0:
+                ball.right = 1
+            elif ball.rect.x < mx and ball.right > 0:
+                ball.right = -1
+        elif mx - 20 < ball.rect.x < mx + 20:
+            if ball.rect.x > mx and ball.right < 0:
+                ball.right = 2
+            elif ball.rect.x < mx and ball.right > 0:
+                ball.right = -2
         paddle_sound.play()
 
     if ball.rect.y < 100:
